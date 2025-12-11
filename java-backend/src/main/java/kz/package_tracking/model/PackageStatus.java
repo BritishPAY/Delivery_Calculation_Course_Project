@@ -4,8 +4,12 @@ package kz.package_tracking.model;
  * Enumeration of possible package statuses during delivery lifecycle.
  */
 public enum PackageStatus {
-    PENDING,
+    CREATED,
     IN_TRANSIT,
     DELIVERED,
-    CANCELLED
+    CANCELLED;
+
+    public boolean isEmpty() {
+        return false;
+    }
 }

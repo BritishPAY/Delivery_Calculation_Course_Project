@@ -1,6 +1,6 @@
 export type PackageType = "STANDARD" | "EXPRESS"
 
-export type PackageStatus = "PENDING" | "IN_TRANSIT" | "DELIVERED" | "CANCELLED"
+export type PackageStatus = "CREATED" | "IN_TRANSIT" | "DELIVERED" | "CANCELLED"
 
 export interface Package {
   trackingNumber: string

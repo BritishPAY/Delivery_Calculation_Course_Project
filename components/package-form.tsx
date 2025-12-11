@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -35,22 +34,32 @@ export function PackageForm() {
     setResult(null)
 
     try {
-      const response = await fetch("/api/packages", {
+      const response = await fetch("http://localhost:8080/api/packages", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          cost: 0,
+        }),
       })
 
+      const text = await response.text()
+
       if (!response.ok) {
-        throw new Error("Failed to create package")
+        try {
+          const errorData = JSON.parse(text)
+          throw new Error(errorData.error || "Failed to create package")
+        } catch {
+          throw new Error("Server error — check backend logs")
+        }
       }
 
-      const data = await response.json()
+      const data = JSON.parse(text)
       setResult(data)
 
-      // Reset form
+      // Сброс формы
       setFormData({
         senderFirstName: "",
         senderLastName: "",
@@ -62,7 +71,8 @@ export function PackageForm() {
         type: "STANDARD",
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred")
+      setError(err instanceof Error ? err.message : "Network error")
+      console.error("Package creation failed:", err)
     } finally {
       setLoading(false)
     }
@@ -80,7 +90,9 @@ export function PackageForm() {
             <PackageIcon className="h-5 w-5" />
             Register New Package
           </CardTitle>
-          <CardDescription>Enter sender and receiver information to create a new package shipment</CardDescription>
+          <CardDescription>
+            Enter sender and receiver information to create a new package shipment
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -95,7 +107,7 @@ export function PackageForm() {
                     value={formData.senderFirstName}
                     onChange={(e) => updateFormData("senderFirstName", e.target.value)}
                     required
-                    placeholder="Enter first name"
+                    placeholder="name"
                   />
                 </div>
                 <div className="space-y-2">
@@ -105,7 +117,7 @@ export function PackageForm() {
                     value={formData.senderLastName}
                     onChange={(e) => updateFormData("senderLastName", e.target.value)}
                     required
-                    placeholder="Enter last name"
+                    placeholder="surname"
                   />
                 </div>
               </div>
@@ -122,7 +134,6 @@ export function PackageForm() {
                     value={formData.receiverFirstName}
                     onChange={(e) => updateFormData("receiverFirstName", e.target.value)}
                     required
-                    placeholder="Enter first name"
                   />
                 </div>
                 <div className="space-y-2">
@@ -132,7 +143,6 @@ export function PackageForm() {
                     value={formData.receiverLastName}
                     onChange={(e) => updateFormData("receiverLastName", e.target.value)}
                     required
-                    placeholder="Enter last name"
                   />
                 </div>
               </div>
@@ -149,18 +159,17 @@ export function PackageForm() {
                     onValueChange={(value) => updateFormData("originCity", value)}
                     required
                   >
-                    <SelectTrigger id="originCity">
-                      <SelectValue placeholder="Select origin city" />
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choice origin city" />
                     </SelectTrigger>
                     <SelectContent>
                       {KAZAKHSTAN_CITIES.map((city) => (
-                        <SelectItem key={city} value={city}>
-                          {city}
-                        </SelectItem>
+                        <SelectItem key={city} value={city}>{city}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="destinationCity">Destination City</Label>
                   <Select
@@ -168,18 +177,17 @@ export function PackageForm() {
                     onValueChange={(value) => updateFormData("destinationCity", value)}
                     required
                   >
-                    <SelectTrigger id="destinationCity">
-                      <SelectValue placeholder="Select destination city" />
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choice destination city" />
                     </SelectTrigger>
                     <SelectContent>
                       {KAZAKHSTAN_CITIES.map((city) => (
-                        <SelectItem key={city} value={city}>
-                          {city}
-                        </SelectItem>
+                        <SelectItem key={city} value={city}>{city}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="weight">Weight (kg)</Label>
                   <Input
@@ -188,23 +196,24 @@ export function PackageForm() {
                     step="0.1"
                     min="0.1"
                     value={formData.weight || ""}
-                    onChange={(e) => updateFormData("weight", Number.parseFloat(e.target.value) || 0)}
+                    onChange={(e) => updateFormData("weight", Number(e.target.value) || 0)}
                     required
-                    placeholder="Enter weight"
                   />
                 </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="type">Delivery Type</Label>
                   <Select
                     value={formData.type}
-                    onValueChange={(value) => updateFormData("type", value as "STANDARD" | "EXPRESS")}
+                    onValueChange={(value) => updateFormData("type", value as any)}
                   >
-                    <SelectTrigger id="type">
+                    <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="STANDARD">Standard</SelectItem>
                       <SelectItem value="EXPRESS">Express</SelectItem>
+                      <SelectItem value="INTERNATIONAL">International</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -212,14 +221,16 @@ export function PackageForm() {
             </div>
 
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{error}</div>
+              <div className="p-4 bg-red-50 border border-red-300 rounded-lg text-red-700">
+                {error}
+              </div>
             )}
 
-            <Button type="submit" disabled={loading} className="w-full">
+            <Button type="submit" disabled={loading} className="w-full text-lg py-6">
               {loading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating Package...
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Package creating...
                 </>
               ) : (
                 "Create Package"
@@ -230,34 +241,20 @@ export function PackageForm() {
       </Card>
 
       {result && (
-        <Card className="border-green-200 bg-green-50">
+        <Card className="border-green-300 bg-green-50">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-green-800">
-              <CheckCircle2 className="h-5 w-5" />
-              Package Created Successfully
+            <CardTitle className="flex items-center gap-3 text-green-800">
+              <CheckCircle2 className="h-6 w-6" />
+              Package successfully created!
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-gray-600">Tracking Number</p>
-                <p className="font-mono font-bold text-lg text-green-800">{result.trackingNumber}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Total Cost</p>
-                <p className="font-bold text-lg text-green-800">{result.cost.toFixed(2)} KZT</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Route</p>
-                <p className="font-medium">
-                  {result.originCity} → {result.destinationCity}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Weight</p>
-                <p className="font-medium">{result.weight} kg</p>
-              </div>
-            </div>
+          <CardContent>
+            <p className="text-2xl font-mono text-center text-green-700 mb-4">
+              Tracking-number: <strong>{result.trackingNumber}</strong>
+            </p>
+            <p className="text-center text-lg">
+              Cost: <strong>{result.cost.toLocaleString()} ₸</strong>
+            </p>
           </CardContent>
         </Card>
       )}

@@ -1,43 +1,39 @@
-import { PackageList } from "@/components/package-list"
-import { Calculator, Package, Search } from "lucide-react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
+'use client';
+
+import { useEffect, useState } from 'react';
 
 export default function PackagesPage() {
+  const [packages, setPackages] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('http://localhost:8080/api/packages')
+      .then(r => r.json())
+      .then(setPackages)
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <p className="text-center py-20">Loading...</p>;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Package Tracking</h1>
-          <p className="text-gray-600 text-lg">View and search all registered packages</p>
-        </div>
-
-        {/* Navigation */}
-        <div className="flex flex-wrap gap-3 mb-8">
-          <Button asChild variant="outline">
-            <Link href="/" className="flex items-center gap-2">
-              <Package className="h-4 w-4" />
-              Register Package
-            </Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href="/calculator" className="flex items-center gap-2">
-              <Calculator className="h-4 w-4" />
-              Cost Calculator
-            </Link>
-          </Button>
-          <Button asChild variant="default">
-            <Link href="/packages" className="flex items-center gap-2">
-              <Search className="h-4 w-4" />
-              View Packages
-            </Link>
-          </Button>
-        </div>
-
-        {/* Main Content */}
-        <PackageList />
+    <div className="min-h-screen bg-gray-50 py-12">
+      <div className="max-w-6xl mx-auto px-4">
+        <h1 className="text-4xl font-bold text-center mb-10">Delivery history</h1>
+        {packages.length === 0 ? (
+          <p className="text-center text-gray-500 text-xl">No parcels yet</p>
+        ) : (
+          <div className="space-y-6">
+            {packages.map(p => (
+              <div key={p.trackingNumber} className="bg-white p-6 rounded-lg shadow">
+                <p className="text-2xl font-mono text-blue-600">{p.trackingNumber}</p>
+                <p>{p.senderFirstName} {p.senderLastName} → {p.receiverFirstName} {p.receiverLastName}</p>
+                <p>{p.originCity} → {p.destinationCity}, {p.weight} kg, {p.cost} ₸</p>
+                <p>Status: {p.status}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
-  )
+  );
 }

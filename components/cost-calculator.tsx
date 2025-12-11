@@ -54,7 +54,7 @@ export function CostCalculator() {
 
   const updateFormData = (field: keyof CostCalculationRequest, value: string | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
-    setResult(null) // Clear result when form changes
+    setResult(null)
   }
 
   return (

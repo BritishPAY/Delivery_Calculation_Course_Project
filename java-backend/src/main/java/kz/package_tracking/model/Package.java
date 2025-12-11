@@ -33,7 +33,7 @@ public class Package {
 
     public Package() {
         this.createdAt = LocalDateTime.now();
-        this.status = PackageStatus.PENDING;
+        this.status = PackageStatus.CREATED;
     }
 
     public String getTrackingNumber() {
