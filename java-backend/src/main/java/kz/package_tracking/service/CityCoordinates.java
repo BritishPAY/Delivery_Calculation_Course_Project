@@ -8,7 +8,6 @@ public class CityCoordinates {
     private static final Map<String, Coordinates> CITY_COORDS = new HashMap<>();
 
     static {
-        // Координаты городов Казахстана (широта, долгота)
         CITY_COORDS.put("Almaty", new Coordinates(43.2220, 76.8512));
         CITY_COORDS.put("Astana", new Coordinates(51.1694, 71.4491));
         CITY_COORDS.put("Shymkent", new Coordinates(42.3417, 69.5901));

@@ -119,7 +119,6 @@ export default function CalculatorPage() {
                 <SelectContent>
                   <SelectItem value="STANDARD">Standard</SelectItem>
                   <SelectItem value="EXPRESS">Express</SelectItem>
-                  <SelectItem value="INTERNATIONAL">International</SelectItem>
                 </SelectContent>
               </Select>
             </div>

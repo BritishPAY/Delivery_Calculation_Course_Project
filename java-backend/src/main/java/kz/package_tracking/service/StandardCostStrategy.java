@@ -3,8 +3,7 @@ package kz.package_tracking.service;
 import kz.package_tracking.model.Package;
 
 /**
- * Standard delivery cost calculation strategy.
- * Base rate: 500 KZT + 100 KZT per kg + 2 KZT per km
+ * Базовая стоимость формула: 500 + 100 за кило + 2 KZT за км
  */
 public class StandardCostStrategy implements CostCalculationStrategy {
     

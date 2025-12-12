@@ -1,15 +1,9 @@
 package kz.package_tracking.model;
 
-/**
- * Enumeration of possible package statuses during delivery lifecycle.
- */
+//На данный момент я реализовал только статус создан, в планах добавить еще три статуса: DELIVERED, ARRIVED, CANCELED
 public enum PackageStatus {
-    CREATED,
-    IN_TRANSIT,
-    DELIVERED,
-    CANCELLED;
+    CREATED;
 
     public boolean isEmpty() {
-        return false;
-    }
+        return false; }
 }
