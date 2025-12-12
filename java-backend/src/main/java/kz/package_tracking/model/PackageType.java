@@ -6,6 +6,5 @@ package kz.package_tracking.model;
  */
 public enum PackageType {
     STANDARD,
-    EXPRESS,
-    INTERNATIONAL
+    EXPRESS
 }
