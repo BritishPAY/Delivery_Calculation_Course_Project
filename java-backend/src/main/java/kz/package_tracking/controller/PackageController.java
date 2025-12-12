@@ -3,6 +3,7 @@ package kz.package_tracking.controller;
 import kz.package_tracking.model.Package;
 import kz.package_tracking.model.PackageStatus;
 import kz.package_tracking.service.PackageService;
+import kz.package_tracking.service.DistanceService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,9 +17,11 @@ import java.util.Map;
 public class PackageController {
 
     private final PackageService service;
+    private final DistanceService distanceService;
 
-    public PackageController(PackageService service) {
+    public PackageController(PackageService service, DistanceService distanceService) {
         this.service = service;
+        this.distanceService = distanceService;
     }
 
     @GetMapping
@@ -53,14 +56,8 @@ public class PackageController {
             double weight = Double.parseDouble(req.get("weight").toString());
             String type = (String) req.get("type");
 
-            double distance = switch (origin + "->" + dest) {
-                case "Almaty->Astana", "Astana->Almaty" -> 1200;
-                case "Almaty->Shymkent", "Shymkent->Almaty" -> 690;
-                case "Astana->Shymkent", "Shymkent->Astana" -> 1400;
-                case "Almaty->Karaganda", "Karaganda->Almaty" -> 980;
-                case "Astana->Karaganda", "Karaganda->Astana" -> 220;
-                default -> 800;
-            };
+            // Используем DistanceService с формулой Гаверсина
+            double distance = distanceService.calculateDistance(origin, dest);
 
             double cost = switch (type) {
                 case "EXPRESS" -> 1500 + weight * 200 + distance * 5;
@@ -75,11 +72,9 @@ public class PackageController {
     }
 
     private double calculateCost(String origin, String dest, double weight, String type) {
-        double distance = switch (origin + "->" + dest) {
-            case "Almaty->Astana", "Astana->Almaty" -> 1200;
-            case "Almaty->Shymkent", "Shymkent->Almaty" -> 690;
-            default -> 800;
-        };
+        // Используем DistanceService с формулой Гаверсина
+        double distance = distanceService.calculateDistance(origin, dest);
+
         return switch (type) {
             case "EXPRESS" -> 1500 + weight * 200 + distance * 5;
             case "INTERNATIONAL" -> 3000 + weight * 300 + distance * 10;

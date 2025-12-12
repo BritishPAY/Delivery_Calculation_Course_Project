@@ -1,78 +1,76 @@
 package kz.package_tracking.service;
 
 import org.springframework.stereotype.Service;
+import kz.package_tracking.service.CityCoordinates.Coordinates;
 
-import java.util.HashMap;
-import java.util.Map;
-
-/**
- * Service for calculating distances between Kazakhstan cities.
- * Uses a predefined distance matrix for major cities.
- */
 @Service
 public class DistanceService {
-    
-    private Map<String, Map<String, Double>> distanceMatrix;
-    
-    public DistanceService() {
-        initializeDistanceMatrix();
-    }
-    
+
+    // Радиус Земли в километрах
+    private static final double EARTH_RADIUS_KM = 6371.0;
+
     /**
-     * Calculate distance between two cities.
-     * 
-     * @param originCity Origin city name
-     * @param destinationCity Destination city name
-     * @return Distance in kilometers
+     * Рассчитывает расстояние между двумя городами используя формулу Гаверсина
+     *
+     * @param originCity город отправления
+     * @param destinationCity город назначения
+     * @return расстояние в километрах
      */
     public double calculateDistance(String originCity, String destinationCity) {
+        // Если города одинаковые
         if (originCity.equals(destinationCity)) {
-            return 50.0; // Base distance for same city
+            return 50.0; // Базовое расстояние для одного города
         }
-        
-        Map<String, Double> fromOrigin = distanceMatrix.get(originCity);
-        if (fromOrigin != null && fromOrigin.containsKey(destinationCity)) {
-            return fromOrigin.get(destinationCity);
+
+        // Получаем координаты городов
+        Coordinates origin = CityCoordinates.getCoordinates(originCity);
+        Coordinates destination = CityCoordinates.getCoordinates(destinationCity);
+
+        // Если координаты не найдены, возвращаем дефолтное значение
+        if (origin == null || destination == null) {
+            return 500.0;
         }
-        
-        // Default distance if not in matrix
-        return 500.0;
+
+        // Применяем формулу Гаверсина
+        return haversineDistance(origin, destination);
     }
-    
+
     /**
-     * Initialize distance matrix with approximate distances between major Kazakhstan cities.
+     * Формула Гаверсина для расчета расстояния между двумя точками на сфере
+     *
+     * Формула:
+     * a = sin²(Δφ/2) + cos φ1 ⋅ cos φ2 ⋅ sin²(Δλ/2)
+     * c = 2 ⋅ atan2(√a, √(1−a))
+     * d = R ⋅ c
+     *
+     * где φ - широта, λ - долгота, R - радиус Земли
+     *
+     * @param coord1 координаты первой точки
+     * @param coord2 координаты второй точки
+     * @return расстояние в километрах
      */
-    private void initializeDistanceMatrix() {
-        distanceMatrix = new HashMap<>();
-        
-        // Almaty distances
-        Map<String, Double> almatyDistances = new HashMap<>();
-        almatyDistances.put("Astana", 1200.0);
-        almatyDistances.put("Shymkent", 690.0);
-        almatyDistances.put("Karaganda", 980.0);
-        almatyDistances.put("Aktobe", 2050.0);
-        almatyDistances.put("Pavlodar", 1250.0);
-        almatyDistances.put("Ust-Kamenogorsk", 520.0);
-        almatyDistances.put("Semey", 620.0);
-        distanceMatrix.put("Almaty", almatyDistances);
-        
-        // Astana distances
-        Map<String, Double> astanaDistances = new HashMap<>();
-        astanaDistances.put("Almaty", 1200.0);
-        astanaDistances.put("Shymkent", 1400.0);
-        astanaDistances.put("Karaganda", 220.0);
-        astanaDistances.put("Aktobe", 1100.0);
-        astanaDistances.put("Pavlodar", 450.0);
-        distanceMatrix.put("Astana", astanaDistances);
-        
-        // Shymkent distances
-        Map<String, Double> shymkentDistances = new HashMap<>();
-        shymkentDistances.put("Almaty", 690.0);
-        shymkentDistances.put("Astana", 1400.0);
-        shymkentDistances.put("Taraz", 180.0);
-        shymkentDistances.put("Turkistan", 120.0);
-        distanceMatrix.put("Shymkent", shymkentDistances);
-        
-        // Add more city pairs as needed
+    private double haversineDistance(Coordinates coord1, Coordinates coord2) {
+        // Конвертируем градусы в радианы
+        double lat1Rad = Math.toRadians(coord1.getLatitude());
+        double lat2Rad = Math.toRadians(coord2.getLatitude());
+        double lon1Rad = Math.toRadians(coord1.getLongitude());
+        double lon2Rad = Math.toRadians(coord2.getLongitude());
+
+        // Разница широт и долгот
+        double deltaLat = lat2Rad - lat1Rad;
+        double deltaLon = lon2Rad - lon1Rad;
+
+        // Формула Гаверсина
+        double a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+                Math.cos(lat1Rad) * Math.cos(lat2Rad) *
+                        Math.sin(deltaLon / 2) * Math.sin(deltaLon / 2);
+
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        // Расстояние = радиус Земли × центральный угол
+        double distance = EARTH_RADIUS_KM * c;
+
+        // Округляем до целого числа
+        return Math.round(distance);
     }
 }
